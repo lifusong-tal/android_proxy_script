@@ -81,13 +81,29 @@ select_device() {
     echo "${devices[$((choice-1))]}"
 }
 
+# 获取设备显示名称（品牌 型号）
+get_device_name() {
+    local serial=$1
+    local brand=$(adb -s "$serial" shell getprop ro.product.brand 2>/dev/null </dev/null | tr -d '\r\n')
+    local model=$(adb -s "$serial" shell getprop ro.product.model 2>/dev/null </dev/null | tr -d '\r\n')
+    
+    if [ -n "$brand" ] && [ -n "$model" ]; then
+        echo "${brand} ${model}"
+    elif [ -n "$model" ]; then
+        echo "${model}"
+    else
+        echo "${serial}"
+    fi
+}
+
 # 2. 开启安卓代理（默认端口8888，可自定义）
 enable_proxy() {
     local PORT=${1:-8888}
     local IP=$(get_local_ip)
     local DEVICE=$(select_device)
+    local DEVICE_NAME=$(get_device_name "$DEVICE")
     
-    echo -e "${YELLOW}正在为设备 ${DEVICE} 设置代理：${IP}:${PORT}${NC}"
+    echo -e "${YELLOW}正在为设备 ${DEVICE_NAME} (${DEVICE}) 设置代理：${IP}:${PORT}${NC}"
     
     # 执行ADB命令设置全局代理（与CodeLocator逻辑一致）
     adb -s "$DEVICE" shell settings put global http_proxy "${IP}:${PORT}"
@@ -95,9 +111,9 @@ enable_proxy() {
     adb -s "$DEVICE" shell settings put global global_http_proxy_port "${PORT}"
     
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}代理开启成功！代理地址：${IP}:${PORT}${NC}"
+        echo -e "${GREEN}✓ ${DEVICE_NAME} 代理开启成功！代理地址：${IP}:${PORT}${NC}"
     else
-        echo -e "${RED}代理开启失败！请检查ADB连接和设备权限${NC}"
+        echo -e "${RED}✗ ${DEVICE_NAME} 代理开启失败！请检查ADB连接和设备权限${NC}"
         exit 1
     fi
 }
@@ -105,8 +121,9 @@ enable_proxy() {
 # 3. 解除安卓代理
 disable_proxy() {
     local DEVICE=$(select_device)
+    local DEVICE_NAME=$(get_device_name "$DEVICE")
     
-    echo -e "${YELLOW}正在解除设备 ${DEVICE} 的代理...${NC}"
+    echo -e "${YELLOW}正在解除设备 ${DEVICE_NAME} (${DEVICE}) 的代理...${NC}"
     
     # 清空代理配置（与CodeLocator逻辑一致）
     adb -s "$DEVICE" shell settings put global http_proxy :0
@@ -115,9 +132,9 @@ disable_proxy() {
     adb -s "$DEVICE" shell settings delete global global_http_proxy_port
     
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}代理已成功解除！${NC}"
+        echo -e "${GREEN}✓ ${DEVICE_NAME} 代理已成功解除！${NC}"
     else
-        echo -e "${RED}代理解除失败！请检查ADB连接和设备权限${NC}"
+        echo -e "${RED}✗ ${DEVICE_NAME} 代理解除失败！请检查ADB连接和设备权限${NC}"
         exit 1
     fi
 }
@@ -125,17 +142,18 @@ disable_proxy() {
 # 4. 查看安卓设备当前代理配置
 check_proxy() {
     local DEVICE=$(select_device)
+    local DEVICE_NAME=$(get_device_name "$DEVICE")
     
-    echo -e "${YELLOW}正在查询设备 ${DEVICE} 代理配置...${NC}"
+    echo -e "${YELLOW}正在查询设备 ${DEVICE_NAME} (${DEVICE}) 代理配置...${NC}"
     
     # 读取全局代理配置
     PROXY_CONFIG=$(adb -s "$DEVICE" shell settings list global | grep -E 'http_proxy|global_http_proxy')
     
     if [ -z "$PROXY_CONFIG" ]; then
-        echo -e "${GREEN}当前设备未配置任何代理！${NC}"
+        echo -e "${GREEN}${DEVICE_NAME} 未配置任何代理！${NC}"
     else
-        echo -e "${GREEN}当前代理配置：${NC}"
-        echo "$PROXY_CONFIG" | awk -F'=' '{printf "  %-25s %s\n", $1, $2}'
+        echo -e "${GREEN}${DEVICE_NAME} 当前代理配置：${NC}"
+        echo "$PROXY_CONFIG" | awk -F'=' '{printf "  %-30s %s\n", $1, $2}'
     fi
 }
 
