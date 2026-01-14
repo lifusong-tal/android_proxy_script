@@ -46,11 +46,18 @@ select_device() {
         return 0
     fi
     
-    # 获取每个设备的型号
+    # 获取每个设备的厂商和型号
     for serial in "${devices[@]}"; do
+        local brand=$(adb -s "$serial" shell getprop ro.product.brand 2>/dev/null </dev/null | tr -d '\r\n')
         local model=$(adb -s "$serial" shell getprop ro.product.model 2>/dev/null </dev/null | tr -d '\r\n')
-        [ -z "$model" ] && model="Unknown"
-        models+=("$model")
+        
+        if [ -n "$brand" ] && [ -n "$model" ]; then
+            models+=("${brand} ${model}")
+        elif [ -n "$model" ]; then
+            models+=("${model}")
+        else
+            models+=("Unknown")
+        fi
     done
     
     # 多台设备，显示选择列表（输出到stderr）
