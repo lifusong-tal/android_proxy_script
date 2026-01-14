@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # 脚本仓库的原始 URL
-REPO_RAW_URL="https://raw.githubusercontent.com/sacowiw/scripts/main"
+REPO_RAW_URL="https://raw.githubusercontent.com/lifusong-tal/android_proxy_script/refs/heads/master"
 
 echo -e "${GREEN}=== android-proxy 安装脚本 ===${NC}"
 echo ""
