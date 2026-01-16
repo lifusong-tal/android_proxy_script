@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # android-proxy 安装脚本
-# 使用方法: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/sacowiw/scripts/HEAD/install.sh)"
+# 使用方法: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/lifusong-tal/android_proxy_script/refs/heads/master/install.sh)"
 
 set -e
 
